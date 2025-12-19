@@ -1,0 +1,8 @@
+{
+  "name": "Luz Fácil - PVPC Simplificado",
+  "description": "Una herramienta minimalista diseñada con estándares de Apple para democratizar el precio de la luz en España, traduciendo datos técnicos en decisiones cotidianas.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
