@@ -1,20 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Luz Fácil · Precio de la luz (PVPC) en lenguaje claro
 
-# Run and deploy your AI Studio app
+Aplicación minimalista que muestra el precio de la luz de hoy en España (tarifa PVPC) y lo traduce a decisiones cotidianas: cuándo poner la lavadora, cuándo esperar.
 
-This contains everything you need to run your app locally.
+**Stack:** React 19 · TypeScript · Vite · Gemini API · Cloudflare Pages Functions
 
-View your app in AI Studio: https://ai.studio/apps/drive/1vxPldO104RurVZC1PT_81APGkasjO6Fv
+## Cómo funciona
 
-## Run Locally
+- **Datos:** precios horarios de la API de ESIOS (Red Eléctrica), con varios respaldos: un espejo público, un proxy CORS y, si todo falla, una curva estimada para que la app siga funcionando sin conexión.
+- **Clasificación:** cada hora se marca como barata, media o cara según los percentiles 30 y 70 del día.
+- **Explicación con IA:** Gemini genera una frase corta y comprensible sobre el precio actual (`/api/insight`), con un mensaje de respaldo si la IA no responde.
 
-**Prerequisites:**  Node.js
+## Arquitectura y seguridad
 
+```
+Navegador (React + Vite)  ──fetch /api/*──►  Cloudflare Pages Functions  ──►  API de Gemini
+       sin clave                              GEMINI_API_KEY (variable de entorno)
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- La clave de Gemini **nunca llega al navegador**. La primera versión, generada con Google AI Studio, la incrustaba en el JavaScript público mediante `define` en `vite.config.ts`. La he movido a funciones de servidor.
+- Cada endpoint hace **una sola tarea**, con un prompt fijo y entradas validadas (tipo, longitud, rangos). No es un proxy abierto a Gemini.
+- Límite de tamaño en las peticiones y errores genéricos hacia el cliente (el detalle queda en los logs del servidor).
+
+## Ejecutar en local
+
+```bash
+npm install
+echo "GEMINI_API_KEY=tu_clave" > .dev.vars      # no se sube al repo (.gitignore)
+npm run build && npx wrangler pages dev dist     # app + funciones en :8788
+```
+
+## Despliegue
+
+Cloudflare Pages: build `npm run build`, salida `dist`, y `GEMINI_API_KEY` como variable de entorno cifrada.
